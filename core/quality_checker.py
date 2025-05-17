@@ -1,12 +1,10 @@
 """
 Verificador de qualidade dos dados coletados.
-Responsável por validar a completude e qualidade dos dados.
+Responsável por avaliar a completude e consistência dos dados.
 """
 
 import logging
-from typing import Dict, Any, List
-
-from ..config import settings
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +15,27 @@ class QualityChecker:
     
     def __init__(self):
         """Inicializa o verificador de qualidade."""
-        self.required_fields = settings.REQUIRED_FIELDS
+        # Pesos para cada campo na avaliação de qualidade
+        self.field_weights = {
+            'Company Name (Revised)': 10,  # Nome da empresa é essencial
+            'Location': 7,                 # Localização é muito importante
+            'CNPJ': 8,                     # CNPJ é muito importante
+            'Fantasy name': 5,             # Nome fantasia é importante
+            'Domain': 7,                   # Domínio é muito importante
+            'Size': 6,                     # Tamanho é importante
+            'First name': 4,               # Nome do contato é moderadamente importante
+            'Second Name': 3,              # Sobrenome do contato é menos importante
+            'Office': 4,                   # Cargo é moderadamente importante
+            'E-mail': 8,                   # Email é muito importante
+            'Telephone': 7,                # Telefone é muito importante
+            'Telephone 2': 3,              # Telefone secundário é menos importante
+            'City': 6,                     # Cidade é importante
+            'State': 6,                    # Estado é importante
+            'Linkedin': 5                  # LinkedIn é importante
+        }
+        
+        # Pontuação máxima possível
+        self.max_score = sum(self.field_weights.values())
     
     def check_quality(self, data: Dict[str, Any]) -> float:
         """
@@ -27,130 +45,52 @@ class QualityChecker:
             data: Dados a serem verificados
             
         Returns:
-            Score de qualidade (0.0 a 1.0)
+            Pontuação de qualidade (0.0 a 1.0)
         """
-        logger.info(f"Verificando qualidade dos dados: {data.get('Company Name (Revised)', 'Desconhecido')}")
+        if not data:
+            return 0.0
         
         # Verificar campos obrigatórios
-        completeness_score = self._check_completeness(data)
-        logger.debug(f"Score de completude: {completeness_score}")
+        if not data.get('Company Name (Revised)'):
+            logger.warning("Dados sem nome da empresa")
+            return 0.0
         
-        # Verificar formato dos dados
-        format_score = self._check_format(data)
-        logger.debug(f"Score de formato: {format_score}")
+        # Calcular pontuação
+        score = 0.0
         
-        # Verificar consistência dos dados
-        consistency_score = self._check_consistency(data)
-        logger.debug(f"Score de consistência: {consistency_score}")
+        for field, weight in self.field_weights.items():
+            if field in data and data[field]:
+                score += weight
+                
+                # Bônus para campos com dados mais completos
+                if field == 'CNPJ' and len(str(data[field]).strip()) >= 14:
+                    score += 1
+                elif field == 'Telephone' and len(str(data[field]).strip()) >= 10:
+                    score += 1
+                elif field == 'E-mail' and '@' in str(data[field]):
+                    score += 1
         
-        # Calcular score final (média ponderada)
-        final_score = (
-            completeness_score * 0.5 +
-            format_score * 0.3 +
-            consistency_score * 0.2
-        )
+        # Normalizar pontuação (0.0 a 1.0)
+        normalized_score = score / self.max_score
         
-        logger.info(f"Score final de qualidade: {final_score}")
-        return final_score
+        logger.info(f"Qualidade dos dados para {data.get('Company Name (Revised)', 'Desconhecido')}: {normalized_score:.2f}")
+        
+        return normalized_score
     
-    def _check_completeness(self, data: Dict[str, Any]) -> float:
+    def get_missing_fields(self, data: Dict[str, Any]) -> Dict[str, float]:
         """
-        Verifica a completude dos dados.
+        Identifica campos ausentes ou incompletos.
         
         Args:
             data: Dados a serem verificados
             
         Returns:
-            Score de completude (0.0 a 1.0)
+            Dicionário com campos ausentes e seus pesos
         """
-        # Contar campos obrigatórios preenchidos
-        filled_required = sum(1 for field in self.required_fields if field in data and data[field])
-        total_required = len(self.required_fields)
+        missing = {}
         
-        # Contar campos opcionais preenchidos
-        optional_fields = [field for field in data if field not in self.required_fields]
-        filled_optional = sum(1 for field in optional_fields if data[field])
-        total_optional = len(optional_fields) if optional_fields else 1  # Evitar divisão por zero
+        for field, weight in self.field_weights.items():
+            if field not in data or not data[field]:
+                missing[field] = weight
         
-        # Calcular scores
-        required_score = filled_required / total_required
-        optional_score = filled_optional / total_optional
-        
-        # Calcular score final (peso maior para campos obrigatórios)
-        return required_score * 0.8 + optional_score * 0.2
-    
-    def _check_format(self, data: Dict[str, Any]) -> float:
-        """
-        Verifica o formato dos dados.
-        
-        Args:
-            data: Dados a serem verificados
-            
-        Returns:
-            Score de formato (0.0 a 1.0)
-        """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, verificaria o formato de cada campo
-        # (ex: email válido, CNPJ válido, telefone válido, etc.)
-        
-        format_checks = []
-        
-        # Verificar formato de email
-        if 'E-mail' in data and data['E-mail']:
-            format_checks.append('@' in data['E-mail'] and '.' in data['E-mail'])
-        
-        # Verificar formato de CNPJ
-        if 'CNPJ' in data and data['CNPJ']:
-            format_checks.append(len(data['CNPJ'].replace('.', '').replace('/', '').replace('-', '')) == 14)
-        
-        # Verificar formato de telefone
-        if 'Telephone' in data and data['Telephone']:
-            format_checks.append(len(data['Telephone'].replace('(', '').replace(')', '').replace('-', '').replace(' ', '')) >= 10)
-        
-        # Verificar formato de domínio
-        if 'Domain' in data and data['Domain']:
-            format_checks.append('.' in data['Domain'])
-        
-        # Calcular score
-        if not format_checks:
-            return 0.5  # Score neutro se não houver verificações
-        
-        return sum(1 for check in format_checks if check) / len(format_checks)
-    
-    def _check_consistency(self, data: Dict[str, Any]) -> float:
-        """
-        Verifica a consistência dos dados.
-        
-        Args:
-            data: Dados a serem verificados
-            
-        Returns:
-            Score de consistência (0.0 a 1.0)
-        """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, verificaria a consistência entre campos relacionados
-        # (ex: cidade/estado, domínio/email, etc.)
-        
-        consistency_checks = []
-        
-        # Verificar consistência entre domínio e email
-        if 'Domain' in data and data['Domain'] and 'E-mail' in data and data['E-mail']:
-            domain = data['Domain'].lower()
-            email = data['E-mail'].lower()
-            consistency_checks.append(domain in email)
-        
-        # Verificar consistência entre cidade e estado
-        if 'City' in data and data['City'] and 'State' in data and data['State']:
-            # Simplificado - na versão completa, verificaria com base em dados geográficos
-            consistency_checks.append(True)
-        
-        # Verificar consistência entre nome da empresa e domínio
-        if 'Company Name (Revised)' in data and data['Company Name (Revised)'] and 'Domain' in data and data['Domain']:
-            # Simplificado - na versão completa, faria uma verificação mais sofisticada
-            consistency_checks.append(True)
-        
-        # Calcular score
-        if not consistency_checks:
-            return 0.5  # Score neutro se não houver verificações
-        
-        return sum(1 for check in consistency_checks if check) / len(consistency_checks)
+        return missing

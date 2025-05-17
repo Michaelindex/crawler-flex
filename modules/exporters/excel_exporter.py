@@ -1,143 +1,132 @@
 """
 Exportador de dados para formato Excel.
+Responsável por formatar e exportar os dados coletados para Excel.
 """
 
 import logging
 import os
-from datetime import datetime
-from typing import Dict, Any, List, Optional
-
+from typing import Dict, List, Any
 import pandas as pd
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 class ExcelExporter:
     """
-    Exportador para gerar arquivos Excel a partir dos dados coletados.
+    Exportador para formato Excel com formatação avançada.
     """
     
-    def __init__(self, output_dir: str = None):
-        """
-        Inicializa o exportador Excel.
-        
-        Args:
-            output_dir: Diretório de saída para os arquivos
-        """
-        self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'output')
+    def __init__(self):
+        """Inicializa o exportador Excel."""
+        self.output_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'output')
         os.makedirs(self.output_dir, exist_ok=True)
     
-    def export(self, data: List[Dict[str, Any]], filename: Optional[str] = None) -> str:
+    def export(self, data: List[Dict[str, Any]], filename: str) -> str:
         """
-        Exporta dados para um arquivo Excel.
+        Exporta dados para Excel.
         
         Args:
-            data: Lista de dados a serem exportados
-            filename: Nome do arquivo (opcional)
+            data: Dados a serem exportados
+            filename: Nome do arquivo
             
         Returns:
-            Caminho do arquivo gerado
+            Caminho do arquivo exportado
         """
-        logger.info(f"Exportando {len(data)} registros para Excel")
+        if not data:
+            logger.warning("Nenhum dado para exportar")
+            return ""
         
-        # Criar DataFrame
-        df = pd.DataFrame(data)
+        try:
+            # Criar DataFrame
+            df = pd.DataFrame(data)
+            
+            # Definir caminho de saída
+            output_path = os.path.join(self.output_dir, filename)
+            
+            # Exportar para Excel
+            df.to_excel(output_path, index=False)
+            
+            logger.info(f"Dados exportados para {output_path}")
+            
+            return output_path
         
-        # Gerar nome de arquivo se não fornecido
-        if not filename:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f'empresas_{timestamp}.xlsx'
-        
-        # Garantir extensão .xlsx
-        if not filename.endswith('.xlsx'):
-            filename += '.xlsx'
-        
-        # Caminho completo do arquivo
-        file_path = os.path.join(self.output_dir, filename)
-        
-        # Exportar para Excel
-        df.to_excel(file_path, index=False)
-        logger.info(f"Arquivo Excel gerado: {file_path}")
-        
-        return file_path
+        except Exception as e:
+            logger.error(f"Erro ao exportar dados para Excel: {e}")
+            return ""
     
-    def export_with_formatting(self, data: List[Dict[str, Any]], filename: Optional[str] = None) -> str:
+    def export_with_formatting(self, data: List[Dict[str, Any]], filename: str) -> str:
         """
-        Exporta dados para um arquivo Excel com formatação avançada.
+        Exporta dados para Excel com formatação avançada.
         
         Args:
-            data: Lista de dados a serem exportados
-            filename: Nome do arquivo (opcional)
+            data: Dados a serem exportados
+            filename: Nome do arquivo
             
         Returns:
-            Caminho do arquivo gerado
+            Caminho do arquivo exportado
         """
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        if not data:
+            logger.warning("Nenhum dado para exportar")
+            return ""
         
-        logger.info(f"Exportando {len(data)} registros para Excel com formatação")
-        
-        # Criar DataFrame
-        df = pd.DataFrame(data)
-        
-        # Gerar nome de arquivo se não fornecido
-        if not filename:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f'empresas_{timestamp}_formatado.xlsx'
-        
-        # Garantir extensão .xlsx
-        if not filename.endswith('.xlsx'):
-            filename += '.xlsx'
-        
-        # Caminho completo do arquivo
-        file_path = os.path.join(self.output_dir, filename)
-        
-        # Exportar para Excel (primeiro passo)
-        df.to_excel(file_path, index=False)
-        
-        # Aplicar formatação
-        wb = openpyxl.load_workbook(file_path)
-        ws = wb.active
-        
-        # Estilo para cabeçalho
-        header_font = Font(bold=True, color="FFFFFF")
-        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        
-        # Estilo para bordas
-        thin_border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
-        
-        # Aplicar estilo ao cabeçalho
-        for cell in ws[1]:
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = thin_border
-        
-        # Ajustar largura das colunas
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
+        try:
+            # Criar DataFrame
+            df = pd.DataFrame(data)
             
-            for cell in column:
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
+            # Definir caminho de saída
+            output_path = os.path.join(self.output_dir, filename)
             
-            adjusted_width = max_length + 2
-            ws.column_dimensions[column_letter].width = min(adjusted_width, 50)
+            # Criar Excel writer com formatação
+            with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+                # Exportar dados
+                df.to_excel(writer, index=False, sheet_name='Empresas')
+                
+                # Obter planilha
+                worksheet = writer.sheets['Empresas']
+                
+                # Formatar cabeçalho
+                for col_num, column_title in enumerate(df.columns, 1):
+                    cell = worksheet.cell(row=1, column=col_num)
+                    cell.font = writer.book.create_font(bold=True)
+                
+                # Ajustar largura das colunas
+                for col_num, column in enumerate(df.columns, 1):
+                    max_length = 0
+                    column_name = column
+                    
+                    # Verificar comprimento do nome da coluna
+                    if len(column_name) > max_length:
+                        max_length = len(column_name)
+                    
+                    # Verificar comprimento dos valores na coluna
+                    for row_num in range(len(df)):
+                        cell_value = str(df.iloc[row_num][column])
+                        if len(cell_value) > max_length:
+                            max_length = len(cell_value)
+                    
+                    # Ajustar largura (com margem)
+                    adjusted_width = max_length + 2
+                    worksheet.column_dimensions[chr(64 + col_num)].width = adjusted_width
+            
+            logger.info(f"Dados exportados com formatação para {output_path}")
+            
+            # Também exportar versão CSV para compatibilidade
+            csv_path = output_path.replace('.xlsx', '.csv')
+            df.to_csv(csv_path, index=False)
+            logger.info(f"Versão CSV exportada para {csv_path}")
+            
+            return output_path
         
-        # Aplicar bordas e alinhamento a todas as células
-        for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-            for cell in row:
-                cell.border = thin_border
-                cell.alignment = Alignment(vertical="center")
-        
-        # Salvar arquivo formatado
-        wb.save(file_path)
-        logger.info(f"Arquivo Excel formatado gerado: {file_path}")
-        
-        return file_path
+        except Exception as e:
+            logger.error(f"Erro ao exportar dados para Excel com formatação: {e}")
+            
+            # Tentar exportar sem formatação como fallback
+            try:
+                df = pd.DataFrame(data)
+                output_path = os.path.join(self.output_dir, filename)
+                df.to_excel(output_path, index=False)
+                logger.info(f"Dados exportados sem formatação para {output_path}")
+                return output_path
+            except Exception as e2:
+                logger.error(f"Erro ao exportar dados sem formatação: {e2}")
+                return ""

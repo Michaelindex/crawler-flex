@@ -12,6 +12,9 @@ from typing import Dict, List, Any, Optional
 from ..config import settings
 from .criteria_parser import CriteriaParser
 from .quality_checker import QualityChecker
+from ..modules.scrapers import get_scraper, get_all_scrapers
+from ..modules.processors.data_processor import DataProcessor
+from ..modules.exporters.excel_exporter import ExcelExporter
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,8 @@ class CrawlerController:
         """Inicializa o controlador com componentes necessários."""
         self.criteria_parser = CriteriaParser()
         self.quality_checker = QualityChecker()
+        self.data_processor = DataProcessor()
+        self.excel_exporter = ExcelExporter()
         self.sources = self._load_sources()
         self._setup_logging()
         
@@ -100,43 +105,20 @@ class CrawlerController:
         Returns:
             Lista de etapas de busca a serem executadas
         """
-        # Implementação simplificada para o protótipo
         search_plan = []
         
-        # Adicionar etapa de descoberta inicial
-        search_plan.append({
-            'type': 'discovery',
-            'source': 'searx',
-            'criteria': criteria
-        })
+        # Definir ordem de execução dos scrapers
+        scraper_order = ['linkedin', 'cnpj', 'company_site']
         
-        # Adicionar etapas de coleta para cada fonte relevante
-        for source in self.sources:
-            # Verificar se a fonte é relevante para os critérios
-            if self._is_source_relevant(source, criteria):
-                search_plan.append({
-                    'type': 'collection',
-                    'source': source['name'],
-                    'criteria': criteria
-                })
+        # Adicionar etapas de busca para cada scraper
+        for scraper_name in scraper_order:
+            search_plan.append({
+                'type': 'search',
+                'scraper': scraper_name,
+                'criteria': criteria
+            })
         
         return search_plan
-    
-    def _is_source_relevant(self, source: Dict[str, Any], criteria: Dict[str, Any]) -> bool:
-        """
-        Verifica se uma fonte é relevante para os critérios fornecidos.
-        
-        Args:
-            source: Informações da fonte
-            criteria: Critérios de busca
-            
-        Returns:
-            True se a fonte for relevante, False caso contrário
-        """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, verificaria quais tipos de dados são necessários
-        # com base nos critérios e compararia com os tipos fornecidos pela fonte
-        return True
     
     def _execute_search(self, search_plan: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -148,29 +130,91 @@ class CrawlerController:
         Returns:
             Lista de resultados brutos da busca
         """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, instanciaria os scrapers apropriados
-        # e executaria cada etapa do plano
+        all_results = []
+        company_data = {}  # Dicionário para armazenar dados por empresa
         
-        # Simulação de resultados para demonstração
-        raw_results = [
-            {
-                'name': 'Empresa Exemplo 1',
-                'cnpj': '12.345.678/0001-90',
-                'fantasy_name': 'Exemplo Tech',
-                'domain': 'exemplotech.com.br',
-                'sources': ['LinkedIn', 'Site Corporativo']
-            },
-            {
-                'name': 'Empresa Exemplo 2',
-                'cnpj': '98.765.432/0001-10',
-                'fantasy_name': 'Tech Solutions',
-                'domain': 'techsolutions.com.br',
-                'sources': ['LinkedIn', 'CNPJ.biz']
-            }
-        ]
+        # Executar cada etapa do plano
+        for step in search_plan:
+            try:
+                logger.info(f"Executando etapa: {step['type']} com {step['scraper']}")
+                
+                # Obter scraper
+                scraper = get_scraper(step['scraper'])
+                
+                # Executar busca
+                if step['type'] == 'search':
+                    search_results = scraper.search(step['criteria'])
+                    logger.info(f"Busca com {step['scraper']} encontrou {len(search_results)} resultados")
+                    
+                    # Para cada resultado da busca, coletar dados detalhados
+                    for result in search_results:
+                        try:
+                            # Identificar empresa (por nome ou domínio)
+                            company_id = self._get_company_id(result)
+                            
+                            # Coletar dados detalhados
+                            detailed_data = scraper.collect(result, [])
+                            
+                            # Armazenar dados no dicionário de empresas
+                            if company_id not in company_data:
+                                company_data[company_id] = []
+                            
+                            company_data[company_id].append(detailed_data)
+                            
+                        except Exception as e:
+                            logger.error(f"Erro ao coletar dados para {result.get('name', 'desconhecido')}: {e}")
+            
+            except Exception as e:
+                logger.error(f"Erro ao executar etapa {step['type']} com {step['scraper']}: {e}")
         
-        return raw_results
+        # Converter dicionário para lista
+        for company_id, data_list in company_data.items():
+            all_results.append({
+                'company_id': company_id,
+                'data_sources': data_list
+            })
+        
+        return all_results
+    
+    def _get_company_id(self, result: Dict[str, Any]) -> str:
+        """
+        Obtém um identificador único para a empresa.
+        
+        Args:
+            result: Dados da empresa
+            
+        Returns:
+            Identificador único da empresa
+        """
+        # Tentar usar CNPJ como identificador
+        if 'cnpj' in result and result['cnpj']:
+            return f"cnpj:{self._normalize_cnpj(result['cnpj'])}"
+        
+        # Tentar usar domínio como identificador
+        if 'domain' in result and result['domain']:
+            return f"domain:{result['domain'].lower()}"
+        
+        # Usar nome como identificador (menos confiável)
+        if 'name' in result and result['name']:
+            return f"name:{result['name'].lower()}"
+        
+        # Fallback para um hash dos dados
+        import hashlib
+        import json
+        data_str = json.dumps(result, sort_keys=True)
+        return f"hash:{hashlib.md5(data_str.encode()).hexdigest()}"
+    
+    def _normalize_cnpj(self, cnpj: str) -> str:
+        """
+        Normaliza um CNPJ removendo caracteres não numéricos.
+        
+        Args:
+            cnpj: CNPJ a ser normalizado
+            
+        Returns:
+            CNPJ normalizado
+        """
+        return ''.join(c for c in cnpj if c.isdigit())
     
     def _process_results(self, raw_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -182,50 +226,22 @@ class CrawlerController:
         Returns:
             Lista de resultados processados e validados
         """
-        # Implementação simplificada para o protótipo
-        processed_results = []
+        # Usar o processador de dados para unificar informações de múltiplas fontes
+        processed_data = self.data_processor.process(raw_results)
         
-        for result in raw_results:
-            # Simular processamento e validação
-            processed = self._transform_to_output_format(result)
-            
+        # Verificar qualidade dos dados
+        validated_results = []
+        
+        for company_data in processed_data:
             # Verificar qualidade
-            quality_score = self.quality_checker.check_quality(processed)
-            if quality_score >= settings.MIN_QUALITY_SCORE:
-                processed_results.append(processed)
-        
-        return processed_results
-    
-    def _transform_to_output_format(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Transforma o resultado para o formato de saída esperado.
-        
-        Args:
-            result: Resultado bruto
+            quality_score = self.quality_checker.check_quality(company_data)
             
-        Returns:
-            Resultado no formato de saída
-        """
-        # Implementação simplificada para o protótipo
-        # Mapear campos do resultado para o formato de saída
-        return {
-            'Company Name (Revised)': result.get('name', ''),
-            'Location': 'Endereço Exemplo, 123',
-            'CNPJ': result.get('cnpj', ''),
-            'Fantasy name': result.get('fantasy_name', ''),
-            'Domain': result.get('domain', ''),
-            'Size': 'Médio Porte',
-            'First name': 'Nome',
-            'Second Name': 'Sobrenome',
-            'Office': 'Cargo Exemplo',
-            'E-mail': f'contato@{result.get("domain", "exemplo.com")}',
-            'Telephone': '(11) 1234-5678',
-            'Telephone 2': '(11) 8765-4321',
-            'City': 'São Paulo',
-            'State': 'SP',
-            'Linkedin': f'https://linkedin.com/company/{result.get("fantasy_name", "").lower().replace(" ", "-")}',
-            'LOTE': 1
-        }
+            if quality_score >= settings.MIN_QUALITY_SCORE:
+                validated_results.append(company_data)
+            else:
+                logger.warning(f"Empresa {company_data.get('Company Name (Revised)', 'Desconhecida')} não atingiu score mínimo de qualidade: {quality_score}")
+        
+        return validated_results
     
     def _export_results(self, results: List[Dict[str, Any]], output_config: Dict[str, Any]) -> str:
         """
@@ -238,22 +254,33 @@ class CrawlerController:
         Returns:
             Caminho do arquivo de saída
         """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, usaria os exportadores apropriados
-        
         output_format = output_config.get('format', settings.DEFAULT_OUTPUT_FORMAT)
-        output_dir = os.path.join(os.path.dirname(__file__), '..', settings.DEFAULT_OUTPUT_DIR)
-        
-        # Garantir que o diretório existe
-        os.makedirs(output_dir, exist_ok=True)
         
         # Gerar nome de arquivo com timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'empresas_{timestamp}.{output_format}'
-        output_path = os.path.join(output_dir, filename)
+        filename = f'empresas_{timestamp}'
         
-        # Simular exportação
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(results, indent=2, ensure_ascii=False))
-        
-        return output_path
+        if output_format == 'excel':
+            # Usar exportador Excel
+            return self.excel_exporter.export_with_formatting(results, f"{filename}.xlsx")
+        elif output_format == 'csv':
+            # Usar exportador CSV (simplificado)
+            import pandas as pd
+            output_dir = os.path.join(os.path.dirname(__file__), '..', settings.DEFAULT_OUTPUT_DIR)
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, f"{filename}.csv")
+            
+            df = pd.DataFrame(results)
+            df.to_csv(output_path, index=False)
+            
+            return output_path
+        else:
+            # Formato JSON
+            output_dir = os.path.join(os.path.dirname(__file__), '..', settings.DEFAULT_OUTPUT_DIR)
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, f"{filename}.json")
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+            
+            return output_path

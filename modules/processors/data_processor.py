@@ -1,301 +1,191 @@
 """
-Processador de dados para unificar e enriquecer informações coletadas.
+Processador de dados para unificar informações de múltiplas fontes.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
 class DataProcessor:
     """
-    Processador para unificar e enriquecer dados coletados de múltiplas fontes.
+    Processador responsável por unificar dados de múltiplas fontes.
     """
     
-    def __init__(self, ai_client=None):
-        """
-        Inicializa o processador de dados.
-        
-        Args:
-            ai_client: Cliente para IA local (opcional)
-        """
-        self.ai_client = ai_client
+    def __init__(self):
+        """Inicializa o processador de dados."""
+        # Mapeamento de campos de diferentes fontes para campos padronizados
+        self.field_mapping = {
+            'linkedin': {
+                'name': 'Company Name (Revised)',
+                'location': 'Location',
+                'size': 'Size',
+                'first_name': 'First name',
+                'last_name': 'Second Name',
+                'position': 'Office',
+                'website': 'Domain',
+                'linkedin': 'Linkedin',
+                'city': 'City',
+                'state': 'State'
+            },
+            'cnpj': {
+                'name': 'Company Name (Revised)',
+                'fantasy_name': 'Fantasy name',
+                'cnpj': 'CNPJ',
+                'cnpj_formatted': 'CNPJ',
+                'location': 'Location',
+                'address': 'Location',
+                'email': 'E-mail',
+                'phone': 'Telephone',
+                'phone2': 'Telephone 2',
+                'city': 'City',
+                'state': 'State'
+            },
+            'company_site': {
+                'name': 'Company Name (Revised)',
+                'website': 'Domain',
+                'domain': 'Domain',
+                'email': 'E-mail',
+                'phone': 'Telephone',
+                'phone2': 'Telephone 2',
+                'address': 'Location',
+                'size': 'Size'
+            }
+        }
     
-    def process(self, raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, raw_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Processa dados brutos coletados de múltiplas fontes.
+        Processa e unifica dados de múltiplas fontes.
         
         Args:
-            raw_data: Lista de dados brutos coletados
+            raw_results: Resultados brutos da busca
             
         Returns:
-            Lista de dados processados e unificados
+            Lista de resultados processados
         """
-        logger.info(f"Processando {len(raw_data)} registros de dados brutos")
+        processed_results = []
         
-        # Agrupar dados por empresa
-        grouped_data = self._group_by_company(raw_data)
-        logger.info(f"Dados agrupados em {len(grouped_data)} empresas")
+        for company_result in raw_results:
+            try:
+                # Inicializar dados unificados
+                unified_data = {
+                    'Company Name (Revised)': '',
+                    'Location': '',
+                    'CNPJ': '',
+                    'Fantasy name': '',
+                    'Domain': '',
+                    'Size': '',
+                    'First name': '',
+                    'Second Name': '',
+                    'Office': '',
+                    'E-mail': '',
+                    'Telephone': '',
+                    'Telephone 2': '',
+                    'City': '',
+                    'State': '',
+                    'Linkedin': '',
+                    'LOTE': 1  # Valor padrão para LOTE
+                }
+                
+                # Processar cada fonte de dados
+                for source_data in company_result.get('data_sources', []):
+                    source_type = source_data.get('source', '')
+                    
+                    if source_type in self.field_mapping:
+                        # Mapear campos da fonte para campos padronizados
+                        for source_field, target_field in self.field_mapping[source_type].items():
+                            if source_field in source_data and source_data[source_field]:
+                                # Só atualizar se o campo estiver vazio ou a fonte atual for mais confiável
+                                if not unified_data[target_field] or self._is_better_source(source_type, target_field, unified_data.get(f"_source_{target_field}", "")):
+                                    unified_data[target_field] = source_data[source_field]
+                                    unified_data[f"_source_{target_field}"] = source_type
+                
+                # Verificar se tem dados suficientes
+                if self._has_minimum_data(unified_data):
+                    # Remover campos temporários de controle
+                    for field in list(unified_data.keys()):
+                        if field.startswith('_source_'):
+                            del unified_data[field]
+                    
+                    processed_results.append(unified_data)
+                else:
+                    logger.warning(f"Empresa {unified_data['Company Name (Revised)']} não tem dados mínimos necessários")
+            
+            except Exception as e:
+                logger.error(f"Erro ao processar dados da empresa: {e}")
         
-        # Processar cada grupo
-        processed_data = []
-        for company_id, company_data in grouped_data.items():
-            processed = self._process_company(company_id, company_data)
-            processed_data.append(processed)
-        
-        logger.info(f"Processamento concluído. {len(processed_data)} empresas processadas")
-        return processed_data
+        return processed_results
     
-    def _group_by_company(self, raw_data: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _is_better_source(self, new_source: str, field: str, current_source: str) -> bool:
         """
-        Agrupa dados brutos por empresa.
+        Verifica se a nova fonte é mais confiável que a atual para um campo específico.
         
         Args:
-            raw_data: Lista de dados brutos
+            new_source: Nova fonte de dados
+            field: Campo a ser verificado
+            current_source: Fonte atual
             
         Returns:
-            Dicionário com dados agrupados por empresa
+            True se a nova fonte for mais confiável, False caso contrário
         """
-        grouped = {}
+        # Prioridade de fontes por campo
+        priorities = {
+            'Company Name (Revised)': ['cnpj', 'linkedin', 'company_site'],
+            'Location': ['cnpj', 'company_site', 'linkedin'],
+            'CNPJ': ['cnpj'],
+            'Fantasy name': ['cnpj'],
+            'Domain': ['company_site', 'linkedin', 'cnpj'],
+            'Size': ['linkedin', 'company_site'],
+            'First name': ['linkedin'],
+            'Second Name': ['linkedin'],
+            'Office': ['linkedin'],
+            'E-mail': ['company_site', 'cnpj'],
+            'Telephone': ['cnpj', 'company_site'],
+            'Telephone 2': ['cnpj', 'company_site'],
+            'City': ['cnpj', 'linkedin', 'company_site'],
+            'State': ['cnpj', 'linkedin', 'company_site'],
+            'Linkedin': ['linkedin']
+        }
         
-        for item in raw_data:
-            # Identificar a empresa (por CNPJ, domínio ou nome)
-            company_id = self._get_company_id(item)
-            
-            if company_id not in grouped:
-                grouped[company_id] = []
-            
-            grouped[company_id].append(item)
+        # Se o campo não estiver no dicionário de prioridades, qualquer fonte é válida
+        if field not in priorities:
+            return True
         
-        return grouped
+        # Se a fonte atual não estiver definida, a nova fonte é melhor
+        if not current_source:
+            return True
+        
+        # Verificar prioridade
+        if new_source in priorities[field] and current_source in priorities[field]:
+            return priorities[field].index(new_source) < priorities[field].index(current_source)
+        
+        # Se a nova fonte estiver na lista de prioridades e a atual não, a nova é melhor
+        if new_source in priorities[field] and current_source not in priorities[field]:
+            return True
+        
+        # Em outros casos, manter a fonte atual
+        return False
     
-    def _get_company_id(self, item: Dict[str, Any]) -> str:
+    def _has_minimum_data(self, data: Dict[str, Any]) -> bool:
         """
-        Obtém um identificador único para a empresa.
-        
-        Args:
-            item: Dados da empresa
-            
-        Returns:
-            Identificador único da empresa
-        """
-        # Tentar usar CNPJ como identificador
-        if 'cnpj' in item and item['cnpj']:
-            return f"cnpj:{self._normalize_cnpj(item['cnpj'])}"
-        
-        # Tentar usar domínio como identificador
-        if 'domain' in item and item['domain']:
-            return f"domain:{item['domain'].lower()}"
-        
-        # Usar nome como identificador (menos confiável)
-        if 'name' in item and item['name']:
-            return f"name:{item['name'].lower()}"
-        
-        # Fallback para um hash dos dados
-        import hashlib
-        import json
-        data_str = json.dumps(item, sort_keys=True)
-        return f"hash:{hashlib.md5(data_str.encode()).hexdigest()}"
-    
-    def _normalize_cnpj(self, cnpj: str) -> str:
-        """
-        Normaliza um CNPJ removendo caracteres não numéricos.
-        
-        Args:
-            cnpj: CNPJ a ser normalizado
-            
-        Returns:
-            CNPJ normalizado
-        """
-        return ''.join(c for c in cnpj if c.isdigit())
-    
-    def _process_company(self, company_id: str, company_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Processa dados de uma empresa específica.
-        
-        Args:
-            company_id: Identificador da empresa
-            company_data: Lista de dados da empresa de diferentes fontes
-            
-        Returns:
-            Dados processados e unificados da empresa
-        """
-        logger.debug(f"Processando empresa {company_id} com {len(company_data)} fontes de dados")
-        
-        # Inicializar dados unificados
-        unified = {}
-        
-        # Unificar dados básicos
-        unified = self._unify_basic_data(company_data, unified)
-        
-        # Unificar dados de contato
-        unified = self._unify_contact_data(company_data, unified)
-        
-        # Unificar dados de localização
-        unified = self._unify_location_data(company_data, unified)
-        
-        # Enriquecer dados com IA (se disponível)
-        if self.ai_client:
-            unified = self._enrich_with_ai(unified)
-        
-        # Transformar para formato de saída
-        output = self._transform_to_output_format(unified)
-        
-        return output
-    
-    def _unify_basic_data(self, company_data: List[Dict[str, Any]], unified: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Unifica dados básicos da empresa.
-        
-        Args:
-            company_data: Lista de dados da empresa
-            unified: Dados unificados atuais
-            
-        Returns:
-            Dados unificados atualizados
-        """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, implementaria lógica de resolução de conflitos
-        # e priorização de fontes
-        
-        for item in company_data:
-            # Nome da empresa
-            if 'name' in item and item['name'] and 'name' not in unified:
-                unified['name'] = item['name']
-            
-            # CNPJ
-            if 'cnpj' in item and item['cnpj'] and 'cnpj' not in unified:
-                unified['cnpj'] = item['cnpj']
-            
-            # Nome fantasia
-            if 'fantasy_name' in item and item['fantasy_name'] and 'fantasy_name' not in unified:
-                unified['fantasy_name'] = item['fantasy_name']
-            
-            # Domínio
-            if 'domain' in item and item['domain'] and 'domain' not in unified:
-                unified['domain'] = item['domain']
-            
-            # Tamanho
-            if 'size' in item and item['size'] and 'size' not in unified:
-                unified['size'] = item['size']
-        
-        return unified
-    
-    def _unify_contact_data(self, company_data: List[Dict[str, Any]], unified: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Unifica dados de contato da empresa.
-        
-        Args:
-            company_data: Lista de dados da empresa
-            unified: Dados unificados atuais
-            
-        Returns:
-            Dados unificados atualizados
-        """
-        # Implementação simplificada para o protótipo
-        
-        for item in company_data:
-            # Email
-            if 'email' in item and item['email'] and 'email' not in unified:
-                unified['email'] = item['email']
-            
-            # Telefone principal
-            if 'phone' in item and item['phone'] and 'phone' not in unified:
-                unified['phone'] = item['phone']
-            
-            # Telefone secundário
-            if 'phone2' in item and item['phone2'] and 'phone2' not in unified:
-                unified['phone2'] = item['phone2']
-            
-            # LinkedIn
-            if 'linkedin' in item and item['linkedin'] and 'linkedin' not in unified:
-                unified['linkedin'] = item['linkedin']
-            
-            # Contatos específicos
-            if 'contacts' in item and item['contacts'] and 'contacts' not in unified:
-                unified['contacts'] = item['contacts']
-        
-        return unified
-    
-    def _unify_location_data(self, company_data: List[Dict[str, Any]], unified: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Unifica dados de localização da empresa.
-        
-        Args:
-            company_data: Lista de dados da empresa
-            unified: Dados unificados atuais
-            
-        Returns:
-            Dados unificados atualizados
-        """
-        # Implementação simplificada para o protótipo
-        
-        for item in company_data:
-            # Endereço completo
-            if 'address' in item and item['address'] and 'address' not in unified:
-                unified['address'] = item['address']
-            
-            # Cidade
-            if 'city' in item and item['city'] and 'city' not in unified:
-                unified['city'] = item['city']
-            
-            # Estado
-            if 'state' in item and item['state'] and 'state' not in unified:
-                unified['state'] = item['state']
-        
-        return unified
-    
-    def _enrich_with_ai(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Enriquece dados usando IA local.
-        
-        Args:
-            data: Dados a serem enriquecidos
-            
-        Returns:
-            Dados enriquecidos
-        """
-        # Implementação simplificada para o protótipo
-        # Na versão completa, usaria a IA para inferir dados faltantes
-        # e melhorar a qualidade dos dados existentes
-        
-        return data
-    
-    def _transform_to_output_format(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Transforma dados unificados para o formato de saída esperado.
+        Verifica se os dados têm o mínimo necessário para serem considerados válidos.
         
         Args:
             data: Dados unificados
             
         Returns:
-            Dados no formato de saída
+            True se os dados forem válidos, False caso contrário
         """
-        # Mapeamento de campos internos para campos de saída
-        output = {
-            'Company Name (Revised)': data.get('name', ''),
-            'Location': data.get('address', ''),
-            'CNPJ': data.get('cnpj', ''),
-            'Fantasy name': data.get('fantasy_name', ''),
-            'Domain': data.get('domain', ''),
-            'Size': data.get('size', ''),
-            'First name': '',
-            'Second Name': '',
-            'Office': '',
-            'E-mail': data.get('email', ''),
-            'Telephone': data.get('phone', ''),
-            'Telephone 2': data.get('phone2', ''),
-            'City': data.get('city', ''),
-            'State': data.get('state', ''),
-            'Linkedin': data.get('linkedin', ''),
-            'LOTE': 1
-        }
+        # Campos obrigatórios
+        required_fields = ['Company Name (Revised)']
         
-        # Processar contatos (se disponíveis)
-        if 'contacts' in data and data['contacts']:
-            contact = data['contacts'][0]  # Usar primeiro contato
-            output['First name'] = contact.get('first_name', '')
-            output['Second Name'] = contact.get('last_name', '')
-            output['Office'] = contact.get('position', '')
+        # Verificar campos obrigatórios
+        for field in required_fields:
+            if not data.get(field):
+                return False
         
-        return output
+        # Verificar se tem pelo menos 50% dos campos preenchidos
+        total_fields = len(data)
+        filled_fields = sum(1 for value in data.values() if value)
+        
+        return filled_fields / total_fields >= 0.5

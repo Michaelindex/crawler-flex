@@ -1,5 +1,6 @@
 """
 Script principal para execução do crawler flexível.
+Ponto de entrada para o sistema.
 """
 
 import argparse
@@ -9,58 +10,65 @@ import os
 import sys
 from datetime import datetime
 
-# Adicionar diretório raiz ao path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from flexible_crawler.core.controller import CrawlerController
-from flexible_crawler.config import settings
+from core.controller import CrawlerController
+from config import settings
 
 def setup_logging():
     """Configura o sistema de logging."""
-    log_level = getattr(logging, settings.LOG_LEVEL)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    log_file = f"crawler_{timestamp}.log"
+    
     logging.basicConfig(
-        level=log_level,
+        level=getattr(logging, settings.LOG_LEVEL),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(f"crawler_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+            logging.FileHandler(log_file),
+            logging.StreamHandler(sys.stdout)
         ]
     )
 
 def parse_arguments():
-    """Processa argumentos da linha de comando."""
+    """Analisa argumentos da linha de comando."""
     parser = argparse.ArgumentParser(description='Crawler Flexível para Coleta de Dados Empresariais')
     
-    # Argumentos para arquivo de critérios ou critérios diretos
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--criteria', type=str, help='Caminho para arquivo JSON com critérios de busca')
-    group.add_argument('--sector', type=str, help='Setor principal da empresa')
+    # Argumentos principais
+    parser.add_argument('--criteria', type=str, help='Caminho para arquivo JSON com critérios de busca')
     
-    # Argumentos opcionais
+    # Argumentos diretos
+    parser.add_argument('--sector', type=str, help='Setor principal da empresa')
     parser.add_argument('--location', type=str, help='Localização (país, estado ou cidade)')
     parser.add_argument('--min-employees', type=int, help='Número mínimo de funcionários')
     parser.add_argument('--max-employees', type=int, help='Número máximo de funcionários')
-    parser.add_argument('--min-revenue', type=int, help='Faturamento mínimo')
+    parser.add_argument('--min-revenue', type=float, help='Faturamento mínimo')
     parser.add_argument('--output', type=str, help='Caminho para arquivo de saída')
-    parser.add_argument('--format', type=str, choices=['excel', 'csv'], default='excel', help='Formato de saída')
-    parser.add_argument('--max-results', type=int, default=50, help='Número máximo de resultados')
+    parser.add_argument('--format', type=str, choices=['excel', 'csv', 'json'], default='excel', help='Formato de saída')
+    parser.add_argument('--max-results', type=int, default=5, help='Número máximo de resultados')
     
     return parser.parse_args()
 
+def load_criteria_from_file(file_path):
+    """Carrega critérios de busca de um arquivo JSON."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logging.error(f"Erro ao carregar critérios do arquivo {file_path}: {e}")
+        return None
+
 def build_criteria_from_args(args):
-    """Constrói critérios a partir dos argumentos da linha de comando."""
+    """Constrói critérios de busca a partir dos argumentos da linha de comando."""
     criteria = {}
     
-    # Critérios de setor
+    # Setor
     if args.sector:
         criteria['sector'] = {
             'main': args.sector
         }
     
-    # Critérios de localização
+    # Localização
     if args.location:
         criteria['location'] = {
-            'country': 'Brasil'  # Default para Brasil
+            'country': 'Brasil'  # Padrão
         }
         
         # Tentar identificar se é estado ou cidade
@@ -69,7 +77,7 @@ def build_criteria_from_args(args):
         else:
             criteria['location']['cities'] = [args.location]
     
-    # Critérios de tamanho
+    # Tamanho
     if args.min_employees or args.max_employees:
         criteria['size'] = {
             'employees': {}
@@ -81,7 +89,7 @@ def build_criteria_from_args(args):
         if args.max_employees:
             criteria['size']['employees']['max'] = args.max_employees
     
-    # Critérios de faturamento
+    # Faturamento
     if args.min_revenue:
         if 'size' not in criteria:
             criteria['size'] = {}
@@ -91,7 +99,7 @@ def build_criteria_from_args(args):
             'currency': 'BRL'
         }
     
-    # Configurações de saída
+    # Saída
     criteria['output'] = {
         'format': args.format,
         'max_results': args.max_results
@@ -103,49 +111,54 @@ def main():
     """Função principal."""
     # Configurar logging
     setup_logging()
-    logger = logging.getLogger(__name__)
     
-    # Processar argumentos
+    # Analisar argumentos
     args = parse_arguments()
     
-    # Obter critérios
+    # Carregar critérios
+    criteria = None
+    
     if args.criteria:
-        # Carregar de arquivo
-        try:
-            with open(args.criteria, 'r', encoding='utf-8') as f:
-                criteria = json.load(f)
-        except Exception as e:
-            logger.error(f"Erro ao carregar arquivo de critérios: {e}")
-            sys.exit(1)
+        criteria = load_criteria_from_file(args.criteria)
+        if not criteria:
+            logging.error("Falha ao carregar critérios. Encerrando.")
+            return 1
     else:
-        # Construir a partir dos argumentos
         criteria = build_criteria_from_args(args)
     
-    logger.info(f"Critérios de busca: {criteria}")
+    # Verificar se há critérios
+    if not criteria:
+        logging.error("Nenhum critério fornecido. Use --criteria ou argumentos diretos.")
+        return 1
     
-    # Iniciar controlador
+    # Inicializar controlador
     controller = CrawlerController()
     
     # Executar crawler
     try:
-        result = controller.execute(criteria)
+        logging.info("Iniciando execução do crawler...")
+        results = controller.execute(criteria)
         
         # Exibir resultados
-        logger.info(f"Busca concluída. {result['total_valid']} empresas encontradas.")
-        logger.info(f"Arquivo gerado: {result['output_file']}")
+        logging.info(f"Execução concluída em {results['execution_time']:.2f} segundos")
+        logging.info(f"Total de empresas encontradas: {results['total_found']}")
+        logging.info(f"Total de empresas válidas: {results['total_valid']}")
+        logging.info(f"Resultados exportados para: {results['output_file']}")
         
-        # Se output foi especificado, copiar para o caminho desejado
-        if args.output and result['output_file']:
-            import shutil
-            try:
-                shutil.copy(result['output_file'], args.output)
-                logger.info(f"Arquivo copiado para: {args.output}")
-            except Exception as e:
-                logger.error(f"Erro ao copiar arquivo: {e}")
+        # Exibir dados no console
+        if results['companies']:
+            print("\nEmpresas encontradas:")
+            for i, company in enumerate(results['companies'], 1):
+                print(f"\n{i}. {company.get('Company Name (Revised)', 'Desconhecido')}")
+                print(f"   CNPJ: {company.get('CNPJ', 'N/A')}")
+                print(f"   Localização: {company.get('Location', 'N/A')}")
+                print(f"   Contato: {company.get('E-mail', 'N/A')}")
         
+        return 0
+    
     except Exception as e:
-        logger.error(f"Erro durante a execução: {e}")
-        sys.exit(1)
+        logging.error(f"Erro durante execução: {e}")
+        return 1
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
