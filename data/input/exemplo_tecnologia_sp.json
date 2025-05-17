@@ -1,0 +1,21 @@
+{
+  "sector": {
+    "main": "tecnologia",
+    "sub_sectors": ["software", "hardware", "serviços de TI", "telecomunicações"]
+  },
+  "location": {
+    "country": "Brasil",
+    "states": ["SP"],
+    "cities": ["São Paulo"]
+  },
+  "size": {
+    "employees": {
+      "min": 50,
+      "max": 500
+    }
+  },
+  "output": {
+    "format": "excel",
+    "max_results": 10
+  }
+}

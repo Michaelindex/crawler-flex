@@ -1,0 +1,60 @@
+{
+    "sources": [
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/company/",
+            "priority": 1,
+            "data_types": ["company_info", "size", "contacts"],
+            "requires_selenium": true
+        },
+        {
+            "name": "Site Corporativo",
+            "url": "",
+            "priority": 1,
+            "data_types": ["company_info", "contacts", "location"],
+            "requires_selenium": true
+        },
+        {
+            "name": "CNPJ.biz",
+            "url": "https://cnpj.biz/",
+            "priority": 2,
+            "data_types": ["cnpj", "location", "contacts"],
+            "requires_selenium": true
+        },
+        {
+            "name": "Econodata",
+            "url": "https://www.econodata.com.br/consulta-empresa/",
+            "priority": 2,
+            "data_types": ["company_info", "size", "location"],
+            "requires_selenium": true
+        },
+        {
+            "name": "Google",
+            "url": "",
+            "priority": 3,
+            "data_types": ["general"],
+            "requires_selenium": false
+        },
+        {
+            "name": "Glassdoor",
+            "url": "https://www.glassdoor.com.br/Avalia%C3%A7%C3%B5es/",
+            "priority": 3,
+            "data_types": ["size", "contacts"],
+            "requires_selenium": true
+        },
+        {
+            "name": "Facebook",
+            "url": "https://www.facebook.com/",
+            "priority": 4,
+            "data_types": ["contacts", "location"],
+            "requires_selenium": true
+        },
+        {
+            "name": "Instagram",
+            "url": "https://www.instagram.com/",
+            "priority": 4,
+            "data_types": ["contacts"],
+            "requires_selenium": true
+        }
+    ]
+}

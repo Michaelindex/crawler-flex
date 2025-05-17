@@ -1,0 +1,23 @@
+{
+  "sector": {
+    "main": "saúde",
+    "sub_sectors": ["hospitais", "clínicas", "laboratórios", "farmacêuticas"]
+  },
+  "size": {
+    "employees": {
+      "min": 100,
+      "max": 200
+    },
+    "revenue": {
+      "min": 1000000000,
+      "currency": "BRL"
+    }
+  },
+  "location": {
+    "country": "Brasil"
+  },
+  "output": {
+    "format": "excel",
+    "max_results": 5
+  }
+}

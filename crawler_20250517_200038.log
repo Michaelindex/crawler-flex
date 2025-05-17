@@ -1,0 +1,15 @@
+2025-05-17 20:00:38,396 - __main__ - INFO - Critérios de busca: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'telecomunicações']}, 'location': {'country': 'Brasil', 'states': ['SP'], 'cities': ['São Paulo']}, 'size': {'employees': {'min': 50, 'max': 500}}, 'output': {'format': 'excel', 'max_results': 10}}
+2025-05-17 20:00:38,397 - flexible_crawler.core.controller - INFO - Iniciando execução com critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'telecomunicações']}, 'location': {'country': 'Brasil', 'states': ['SP'], 'cities': ['São Paulo']}, 'size': {'employees': {'min': 50, 'max': 500}}, 'output': {'format': 'excel', 'max_results': 10}}
+2025-05-17 20:00:38,397 - flexible_crawler.core.criteria_parser - INFO - Processando critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'telecomunicações']}, 'location': {'country': 'Brasil', 'states': ['SP'], 'cities': ['São Paulo']}, 'size': {'employees': {'min': 50, 'max': 500}}, 'output': {'format': 'excel', 'max_results': 10}}
+2025-05-17 20:00:38,398 - flexible_crawler.core.criteria_parser - INFO - Critérios processados: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'telecomunicações']}, 'size': {'employees': {'min': 50, 'max': 500}}, 'location': {'country': 'Brasil', 'states': ['SP'], 'cities': ['São Paulo']}, 'output': {'format': 'excel', 'max_results': 10}}
+2025-05-17 20:00:38,398 - flexible_crawler.core.controller - INFO - Critérios processados: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'telecomunicações']}, 'size': {'employees': {'min': 50, 'max': 500}}, 'location': {'country': 'Brasil', 'states': ['SP'], 'cities': ['São Paulo']}, 'output': {'format': 'excel', 'max_results': 10}}
+2025-05-17 20:00:38,399 - flexible_crawler.core.controller - INFO - Plano de busca criado com 9 etapas
+2025-05-17 20:00:38,399 - flexible_crawler.core.controller - INFO - Busca concluída. 2 empresas encontradas
+2025-05-17 20:00:38,399 - flexible_crawler.core.quality_checker - INFO - Verificando qualidade dos dados: Empresa Exemplo 1
+2025-05-17 20:00:38,399 - flexible_crawler.core.quality_checker - INFO - Score final de qualidade: 1.0
+2025-05-17 20:00:38,399 - flexible_crawler.core.quality_checker - INFO - Verificando qualidade dos dados: Empresa Exemplo 2
+2025-05-17 20:00:38,400 - flexible_crawler.core.quality_checker - INFO - Score final de qualidade: 1.0
+2025-05-17 20:00:38,400 - flexible_crawler.core.controller - INFO - Processamento concluído. 2 empresas válidas
+2025-05-17 20:00:38,400 - flexible_crawler.core.controller - INFO - Resultados exportados para C:\Crawler\Empresas\flexible_crawler\core\..\data/output\empresas_20250517_200038.excel
+2025-05-17 20:00:38,401 - __main__ - INFO - Busca concluída. 2 empresas encontradas.
+2025-05-17 20:00:38,401 - __main__ - INFO - Arquivo gerado: C:\Crawler\Empresas\flexible_crawler\core\..\data/output\empresas_20250517_200038.excel
