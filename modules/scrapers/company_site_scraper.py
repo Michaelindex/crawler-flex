@@ -86,16 +86,18 @@ class CompanySiteScraper(BaseScraper):
         logger.info(f"Busca com company_site encontrou {len(results)} resultados")
         return results
     
-    def collect(self, company_name: str) -> Dict[str, Any]:
+    def collect(self, target: Dict[str, Any], fields: List[str] = None) -> Dict[str, Any]:
         """
         Coleta dados detalhados de uma empresa específica.
         
         Args:
-            company_name: Nome da empresa
+            target: Dicionário com dados da empresa
+            fields: Lista de campos a serem coletados (opcional)
             
         Returns:
             Dados coletados
         """
+        company_name = target.get('name', '')
         logger.info(f"Coletando dados do site corporativo para: {company_name}")
         
         try:

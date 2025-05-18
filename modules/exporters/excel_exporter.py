@@ -54,15 +54,8 @@ class ExcelExporter:
             # Converter dados para DataFrame
             df = pd.DataFrame(data)
             
-            # Tentar exportar com formatação avançada
-            try:
-                self._export_with_formatting(df, filepath)
-            except Exception as e:
-                logger.error(f"Erro ao exportar dados para Excel com formatação: {e}")
-                # Fallback para exportação simples
-                df.to_excel(filepath, index=False)
-                logger.info(f"Dados exportados sem formatação para {filepath}")
-            
+            # Exportar com formatação
+            self._export_with_formatting(df, filepath)
             return filepath
         
         except Exception as e:
