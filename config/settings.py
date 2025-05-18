@@ -2,6 +2,12 @@
 Arquivo de configurações globais para o crawler flexível.
 """
 
+import os
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
+
 # Configurações gerais
 DEBUG = True
 LOG_LEVEL = "INFO"
@@ -63,5 +69,6 @@ NAVIGATION_DELAY = 10  # Segundos entre ações de navegação
 SCROLL_PAUSE_TIME = 3  # Segundos entre rolagens
 MAX_SCROLL_ATTEMPTS = 15  # Número máximo de rolagens por página
 
-LINKEDIN_USERNAME = "mcialbr123@gmail.com"
-LINKEDIN_PASSWORD = "Narutopika1!"
+# Credenciais do LinkedIn (carregadas do arquivo .env)
+LINKEDIN_USERNAME = os.getenv("LINKEDIN_USERNAME", "")
+LINKEDIN_PASSWORD = os.getenv("LINKEDIN_PASSWORD", "")
