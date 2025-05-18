@@ -30,13 +30,35 @@ DEFAULT_OUTPUT_FORMAT = "excel"
 DEFAULT_OUTPUT_DIR = "data/output"
 
 # Configurações de qualidade
-MIN_QUALITY_SCORE = 0.3  # Reduzido de 0.5 para 0.3
+MIN_QUALITY_SCORE = 0.3  # Reduzido para aceitar dados parciais
 REQUIRED_FIELDS = [
     "Company Name (Revised)",  # Apenas nome da empresa como campo obrigatório
 ]
 
 # Configurações de scraping
-RECEITAWS_DELAY = 10  # Aumentado de 5 para 10 segundos entre requisições
-USE_ALTERNATIVE_SOURCES = True  # Usar fontes alternativas quando ReceitaWS falhar
-USE_FALLBACK_DATA = True  # Usar dados de fallback quando scraping falhar
 EXPORT_PARTIAL_DATA = True  # Exportar dados mesmo que incompletos
+
+# Whitelist de sites para busca prioritária
+WHITELIST_SITES = [
+    # Sites corporativos
+    {"domain": "linkedin.com", "priority": 1, "type": "social"},
+    {"domain": "gov.br", "priority": 1, "type": "government"},
+    {"domain": "cnpj.biz", "priority": 2, "type": "business"},
+    {"domain": "empresascnpj.com", "priority": 2, "type": "business"},
+    {"domain": "facebook.com", "priority": 3, "type": "social"},
+    {"domain": "instagram.com", "priority": 3, "type": "social"},
+    {"domain": "twitter.com", "priority": 3, "type": "social"},
+    {"domain": "guiainvest.com.br", "priority": 3, "type": "business"},
+    {"domain": "b3.com.br", "priority": 2, "type": "business"},
+    {"domain": "reclameaqui.com.br", "priority": 4, "type": "review"},
+    
+    # Sites de busca
+    {"domain": "google.com", "priority": 5, "type": "search"},
+    {"domain": "bing.com", "priority": 5, "type": "search"},
+    {"domain": "duckduckgo.com", "priority": 5, "type": "search"}
+]
+
+# Configurações de navegação
+NAVIGATION_DELAY = 2  # Segundos entre ações de navegação
+SCROLL_PAUSE_TIME = 1  # Segundos entre rolagens
+MAX_SCROLL_ATTEMPTS = 5  # Número máximo de rolagens por página

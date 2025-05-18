@@ -1,0 +1,10 @@
+{
+  "company": {
+    "name": "TOTVS S.A.",
+    "sector": "tecnologia"
+  },
+  "output": {
+    "format": "excel",
+    "max_results": 1
+  }
+}

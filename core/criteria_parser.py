@@ -1,6 +1,6 @@
 """
 Parser de critérios para o crawler flexível.
-Responsável por validar e processar os critérios de busca.
+Responsável por interpretar e validar os critérios de busca.
 """
 
 import logging
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class CriteriaParser:
     """
-    Parser para validar e processar critérios de busca.
+    Parser de critérios para o crawler flexível.
     """
     
     def __init__(self):
@@ -19,248 +19,151 @@ class CriteriaParser:
     
     def parse(self, criteria: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Valida e processa os critérios de busca.
+        Analisa e valida os critérios de busca.
         
         Args:
-            criteria: Dicionário com os critérios de busca
+            criteria: Critérios de busca
             
         Returns:
-            Dicionário com os critérios processados
-        """
-        logger.info(f"Processando critérios: {criteria}")
-        
-        # Validar critérios
-        self._validate_criteria(criteria)
-        
-        # Processar critérios específicos
-        processed = {}
-        
-        # Processar critérios de setor
-        if 'sector' in criteria:
-            processed['sector'] = self._process_sector(criteria['sector'])
-        
-        # Processar critérios de tamanho
-        if 'size' in criteria:
-            processed['size'] = self._process_size(criteria['size'])
-        
-        # Processar critérios de localização
-        if 'location' in criteria:
-            processed['location'] = self._process_location(criteria['location'])
-        
-        # Processar critérios de contatos
-        if 'contacts' in criteria:
-            processed['contacts'] = self._process_contacts(criteria['contacts'])
-        
-        # Processar critérios adicionais
-        if 'additional' in criteria:
-            processed['additional'] = self._process_additional(criteria['additional'])
-        
-        # Processar lista de empresas (se fornecida)
-        if 'company_list' in criteria:
-            processed['company_list'] = self._process_company_list(criteria['company_list'])
-        
-        # Processar configurações de saída
-        if 'output' in criteria:
-            processed['output'] = self._process_output(criteria['output'])
-        else:
-            processed['output'] = {'format': 'excel'}
-        
-        logger.info(f"Critérios processados: {processed}")
-        return processed
-    
-    def _validate_criteria(self, criteria: Dict[str, Any]) -> None:
-        """
-        Valida os critérios de busca.
-        
-        Args:
-            criteria: Dicionário com os critérios de busca
+            Critérios validados e normalizados
             
         Raises:
             ValueError: Se os critérios forem inválidos
         """
-        # Verificar se pelo menos um critério de busca foi fornecido
+        logger.info(f"Processando critérios: {criteria}")
+        
+        # Verificar se há critérios
         if not criteria:
-            raise ValueError("Nenhum critério de busca fornecido")
+            raise ValueError("Critérios de busca não fornecidos")
         
-        # Verificar se há critérios de busca ou lista de empresas
-        has_search_criteria = any(key in criteria for key in ['sector', 'size', 'location', 'contacts', 'additional'])
-        has_company_list = 'company_list' in criteria
+        # Verificar se há uma lista de empresas específicas
+        has_companies = 'companies' in criteria and isinstance(criteria['companies'], list) and len(criteria['companies']) > 0
         
-        if not has_search_criteria and not has_company_list:
+        # Verificar se há critérios de setor
+        has_sector = 'sector' in criteria and criteria['sector'].get('main')
+        
+        # Verificar se há critérios de localização
+        has_location = 'location' in criteria and (
+            criteria['location'].get('country') or 
+            criteria['location'].get('states') or 
+            criteria['location'].get('cities')
+        )
+        
+        # Verificar se há critérios de tamanho
+        has_size = 'size' in criteria and (
+            'employees' in criteria['size'] or 
+            'revenue' in criteria['size']
+        )
+        
+        # Verificar se há critérios de busca válidos
+        if not (has_companies or has_sector or has_location or has_size):
             raise ValueError("É necessário fornecer critérios de busca ou uma lista de empresas")
+        
+        # Normalizar critérios
+        normalized = self._normalize_criteria(criteria)
+        
+        return normalized
     
-    def _process_sector(self, sector: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_criteria(self, criteria: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Processa critérios de setor.
+        Normaliza os critérios de busca.
         
         Args:
-            sector: Critérios de setor
+            criteria: Critérios de busca
             
         Returns:
-            Critérios de setor processados
+            Critérios normalizados
         """
-        processed = {}
+        normalized = criteria.copy()
         
-        if 'main' in sector:
-            processed['main'] = sector['main']
+        # Normalizar lista de empresas
+        if 'companies' in normalized:
+            companies = []
+            for company in normalized['companies']:
+                if isinstance(company, str):
+                    companies.append({'name': company})
+                elif isinstance(company, dict) and 'name' in company:
+                    companies.append(company)
+            
+            normalized['companies'] = companies
         
-        if 'sub_sectors' in sector and isinstance(sector['sub_sectors'], list):
-            processed['sub_sectors'] = sector['sub_sectors']
+        # Normalizar setor
+        if 'sector' in normalized and isinstance(normalized['sector'], str):
+            normalized['sector'] = {'main': normalized['sector']}
         
-        return processed
+        # Normalizar localização
+        if 'location' in normalized:
+            location = normalized['location']
+            
+            # Converter string única em país
+            if isinstance(location, str):
+                normalized['location'] = {'country': location}
+            
+            # Garantir que listas sejam listas
+            for field in ['states', 'cities']:
+                if field in normalized['location'] and isinstance(normalized['location'][field], str):
+                    normalized['location'][field] = [normalized['location'][field]]
+        
+        # Normalizar tamanho
+        if 'size' in normalized:
+            size = normalized['size']
+            
+            # Converter número único em funcionários
+            if isinstance(size, int):
+                normalized['size'] = {'employees': {'min': size}}
+            
+            # Normalizar funcionários
+            if 'employees' in size and isinstance(size['employees'], int):
+                normalized['size']['employees'] = {'min': size['employees']}
+            
+            # Normalizar faturamento
+            if 'revenue' in size and isinstance(size['revenue'], (int, float)):
+                normalized['size']['revenue'] = {'min': size['revenue'], 'currency': 'BRL'}
+        
+        # Normalizar saída
+        if 'output' not in normalized:
+            normalized['output'] = {}
+        
+        if 'format' not in normalized['output']:
+            normalized['output']['format'] = 'excel'
+        
+        if 'max_results' not in normalized['output']:
+            normalized['output']['max_results'] = 5
+        
+        return normalized
     
-    def _process_size(self, size: Dict[str, Any]) -> Dict[str, Any]:
+    def get_company_names(self, criteria: Dict[str, Any]) -> List[str]:
         """
-        Processa critérios de tamanho.
+        Extrai nomes de empresas dos critérios.
         
         Args:
-            size: Critérios de tamanho
+            criteria: Critérios de busca
             
         Returns:
-            Critérios de tamanho processados
+            Lista de nomes de empresas
         """
-        processed = {}
+        companies = []
         
-        if 'employees' in size:
-            employees = size['employees']
-            processed_employees = {}
-            
-            if 'min' in employees:
-                processed_employees['min'] = int(employees['min'])
-            
-            if 'max' in employees:
-                processed_employees['max'] = int(employees['max'])
-            
-            processed['employees'] = processed_employees
+        if 'companies' in criteria and criteria['companies']:
+            for company in criteria['companies']:
+                if isinstance(company, dict) and 'name' in company:
+                    companies.append(company['name'])
+                elif isinstance(company, str):
+                    companies.append(company)
         
-        if 'revenue' in size:
-            revenue = size['revenue']
-            processed_revenue = {}
-            
-            if 'min' in revenue:
-                processed_revenue['min'] = int(revenue['min'])
-            
-            if 'max' in revenue and revenue['max']:
-                processed_revenue['max'] = int(revenue['max'])
-            
-            if 'currency' in revenue:
-                processed_revenue['currency'] = revenue['currency']
-            else:
-                processed_revenue['currency'] = 'BRL'
-            
-            processed['revenue'] = processed_revenue
-        
-        return processed
+        return companies
     
-    def _process_location(self, location: Dict[str, Any]) -> Dict[str, Any]:
+    def get_max_results(self, criteria: Dict[str, Any]) -> int:
         """
-        Processa critérios de localização.
+        Obtém o número máximo de resultados.
         
         Args:
-            location: Critérios de localização
+            criteria: Critérios de busca
             
         Returns:
-            Critérios de localização processados
+            Número máximo de resultados
         """
-        processed = {}
+        if 'output' in criteria and 'max_results' in criteria['output']:
+            return criteria['output']['max_results']
         
-        if 'country' in location:
-            processed['country'] = location['country']
-        
-        if 'states' in location and isinstance(location['states'], list):
-            processed['states'] = location['states']
-        
-        if 'cities' in location and isinstance(location['cities'], list):
-            processed['cities'] = location['cities']
-        
-        return processed
-    
-    def _process_contacts(self, contacts: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Processa critérios de contatos.
-        
-        Args:
-            contacts: Critérios de contatos
-            
-        Returns:
-            Critérios de contatos processados
-        """
-        processed = {}
-        
-        if 'departments' in contacts and isinstance(contacts['departments'], list):
-            processed['departments'] = contacts['departments']
-        
-        if 'positions' in contacts and isinstance(contacts['positions'], list):
-            processed['positions'] = contacts['positions']
-        
-        return processed
-    
-    def _process_additional(self, additional: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Processa critérios adicionais.
-        
-        Args:
-            additional: Critérios adicionais
-            
-        Returns:
-            Critérios adicionais processados
-        """
-        processed = {}
-        
-        if 'founded_after' in additional:
-            processed['founded_after'] = int(additional['founded_after'])
-        
-        if 'founded_before' in additional:
-            processed['founded_before'] = int(additional['founded_before'])
-        
-        if 'has_international_presence' in additional:
-            processed['has_international_presence'] = bool(additional['has_international_presence'])
-        
-        if 'keywords' in additional and isinstance(additional['keywords'], list):
-            processed['keywords'] = additional['keywords']
-        
-        return processed
-    
-    def _process_company_list(self, company_list: List[str]) -> List[str]:
-        """
-        Processa lista de empresas.
-        
-        Args:
-            company_list: Lista de nomes de empresas
-            
-        Returns:
-            Lista de empresas processada
-        """
-        # Remover duplicatas e valores vazios
-        return list(set(filter(None, company_list)))
-    
-    def _process_output(self, output: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Processa configurações de saída.
-        
-        Args:
-            output: Configurações de saída
-            
-        Returns:
-            Configurações de saída processadas
-        """
-        processed = {}
-        
-        if 'format' in output:
-            format_value = output['format'].lower()
-            if format_value in ['excel', 'csv', 'json']:
-                processed['format'] = format_value
-            else:
-                processed['format'] = 'excel'
-        else:
-            processed['format'] = 'excel'
-        
-        if 'max_results' in output:
-            try:
-                processed['max_results'] = int(output['max_results'])
-            except (ValueError, TypeError):
-                processed['max_results'] = 100
-        else:
-            processed['max_results'] = 100
-        
-        return processed
+        return 5
