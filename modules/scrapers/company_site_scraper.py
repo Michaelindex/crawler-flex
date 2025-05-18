@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .base_scraper import BaseScraper
-from ...utils.selenium_manager import SeleniumManager
+from utils.selenium_manager import SeleniumManager
 
 logger = logging.getLogger(__name__)
 

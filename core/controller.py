@@ -9,12 +9,12 @@ import os
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
-from ..config import settings
-from .criteria_parser import CriteriaParser
-from .quality_checker import QualityChecker
-from ..modules.scrapers import get_scraper, get_all_scrapers
-from ..modules.processors.data_processor import DataProcessor
-from ..modules.exporters.excel_exporter import ExcelExporter
+from config import settings
+from core.criteria_parser import CriteriaParser
+from core.quality_checker import QualityChecker
+from modules.scrapers import get_scraper, get_all_scrapers
+from modules.processors.data_processor import DataProcessor
+from modules.exporters.excel_exporter import ExcelExporter
 
 logger = logging.getLogger(__name__)
 

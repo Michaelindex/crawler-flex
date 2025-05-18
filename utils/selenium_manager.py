@@ -13,7 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-from ..config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -22,57 +22,61 @@ class SeleniumManager:
     Gerenciador de sessões Selenium para automação de navegação.
     """
     
-    def __init__(self, headless: bool = True, user_agent: Optional[str] = None):
+    def __init__(self, headless: bool = True):
         """
         Inicializa o gerenciador Selenium.
         
         Args:
             headless: Se deve executar em modo headless (sem interface gráfica)
-            user_agent: User-Agent personalizado (opcional)
         """
-        self.headless = headless
-        self.user_agent = user_agent or settings.USER_AGENT
         self.driver = None
+        self.headless = headless
+        self._setup_driver()
     
-    def start(self) -> webdriver.Chrome:
-        """
-        Inicia uma sessão Selenium.
-        
-        Returns:
-            Driver Selenium
-        """
-        logger.info("Iniciando sessão Selenium")
-        
-        # Configurar opções do Chrome
-        chrome_options = Options()
-        
-        if self.headless:
-            chrome_options.add_argument("--headless")
-        
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument(f"user-agent={self.user_agent}")
-        chrome_options.add_argument("--disable-notifications")
-        chrome_options.add_argument("--disable-infobars")
-        chrome_options.add_argument("--disable-extensions")
-        
+    def _setup_driver(self):
+        """Configura o driver do Chrome com as opções necessárias."""
         try:
-            # Tentar usar ChromeDriverManager para gerenciar o driver
-            service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        except Exception as e:
-            logger.warning(f"Erro ao usar ChromeDriverManager: {e}")
-            logger.info("Tentando usar chromedriver local")
+            chrome_options = Options()
             
-            # Tentar usar chromedriver local
-            self.driver = webdriver.Chrome(options=chrome_options)
-        
-        # Configurar timeouts
-        self.driver.set_page_load_timeout(settings.SELENIUM_PAGE_LOAD_TIMEOUT)
-        self.driver.implicitly_wait(settings.SELENIUM_IMPLICIT_WAIT)
-        
-        logger.info("Sessão Selenium iniciada com sucesso")
-        return self.driver
+            if self.headless:
+                chrome_options.add_argument('--headless')
+            
+            # Configurações adicionais para evitar erros
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--disable-extensions')
+            chrome_options.add_argument('--disable-software-rasterizer')
+            chrome_options.add_argument('--disable-web-security')
+            chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+            chrome_options.add_argument('--disable-site-isolation-trials')
+            chrome_options.add_argument('--disable-web-security')
+            chrome_options.add_argument('--allow-running-insecure-content')
+            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+            chrome_options.add_argument(f'user-agent={settings.USER_AGENT}')
+            
+            # Desabilitar WebRTC
+            chrome_options.add_argument('--disable-webrtc')
+            chrome_options.add_argument('--disable-webrtc-hw-encoding')
+            chrome_options.add_argument('--disable-webrtc-hw-decoding')
+            
+            # Configurar o serviço
+            service = Service(ChromeDriverManager().install())
+            
+            # Inicializar o driver
+            self.driver = webdriver.Chrome(
+                service=service,
+                options=chrome_options
+            )
+            
+            # Configurar timeouts
+            self.driver.set_page_load_timeout(30)
+            self.driver.implicitly_wait(10)
+            
+        except Exception as e:
+            logger.error(f"Erro ao configurar o driver: {e}")
+            self.stop()
+            raise
     
     def stop(self):
         """
@@ -94,7 +98,7 @@ class SeleniumManager:
         Returns:
             Driver Selenium
         """
-        return self.start()
+        return self.driver
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """

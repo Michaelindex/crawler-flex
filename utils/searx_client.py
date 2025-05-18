@@ -7,7 +7,7 @@ import urllib.parse
 import requests
 from typing import Dict, Any, List, Optional
 
-from ..config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 

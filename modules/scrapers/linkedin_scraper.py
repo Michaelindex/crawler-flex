@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 from .base_scraper import BaseScraper
-from ...utils.selenium_manager import SeleniumManager
+from utils.selenium_manager import SeleniumManager
 
 logger = logging.getLogger(__name__)
 
