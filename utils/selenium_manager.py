@@ -4,6 +4,8 @@ Gerenciador de sessões Selenium para automação de navegação.
 
 import logging
 import time
+import os
+import platform
 from typing import Optional
 
 from selenium import webdriver
@@ -39,7 +41,7 @@ class SeleniumManager:
             chrome_options = Options()
             
             if self.headless:
-                chrome_options.add_argument('--headless')
+                chrome_options.add_argument('--headless=new')
             
             # Configurações adicionais para evitar erros
             chrome_options.add_argument('--no-sandbox')
@@ -50,7 +52,6 @@ class SeleniumManager:
             chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument('--disable-features=IsolateOrigins,site-per-process')
             chrome_options.add_argument('--disable-site-isolation-trials')
-            chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument('--allow-running-insecure-content')
             chrome_options.add_argument('--disable-blink-features=AutomationControlled')
             chrome_options.add_argument(f'user-agent={settings.USER_AGENT}')
@@ -60,8 +61,23 @@ class SeleniumManager:
             chrome_options.add_argument('--disable-webrtc-hw-encoding')
             chrome_options.add_argument('--disable-webrtc-hw-decoding')
             
-            # Configurar o serviço
-            service = Service(ChromeDriverManager().install())
+            # Verificar sistema operacional
+            system = platform.system().lower()
+            logger.info(f"Sistema operacional detectado: {system}")
+            
+            # Configurar o serviço com base no sistema operacional
+            if system == "windows":
+                # Verificar se existe chromedriver.exe no diretório atual
+                if os.path.exists("chromedriver.exe"):
+                    logger.info("Usando chromedriver.exe local")
+                    service = Service("chromedriver.exe")
+                else:
+                    logger.info("Baixando chromedriver para Windows")
+                    service = Service(ChromeDriverManager().install())
+            else:
+                # Linux ou Mac
+                logger.info(f"Baixando chromedriver para {system}")
+                service = Service(ChromeDriverManager().install())
             
             # Inicializar o driver
             self.driver = webdriver.Chrome(
@@ -72,6 +88,8 @@ class SeleniumManager:
             # Configurar timeouts
             self.driver.set_page_load_timeout(30)
             self.driver.implicitly_wait(10)
+            
+            logger.info("Driver Selenium inicializado com sucesso")
             
         except Exception as e:
             logger.error(f"Erro ao configurar o driver: {e}")

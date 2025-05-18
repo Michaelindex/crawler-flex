@@ -1,0 +1,64 @@
+2025-05-17 23:10:42,919 - root - INFO - Iniciando execução do crawler...
+2025-05-17 23:10:42,919 - core.controller - INFO - Iniciando execução com critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:42,919 - core.criteria_parser - INFO - Processando critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:42,920 - core.criteria_parser - INFO - Critérios processados: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:42,920 - core.controller - INFO - Critérios processados: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:42,920 - core.controller - INFO - Plano de busca criado com 3 etapas
+2025-05-17 23:10:42,920 - core.controller - INFO - Executando etapa: search com linkedin
+2025-05-17 23:10:42,920 - modules.scrapers.linkedin_scraper - INFO - Iniciando busca no LinkedIn com critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:42,920 - utils.selenium_manager - INFO - Sistema operacional detectado: linux
+2025-05-17 23:10:42,921 - utils.selenium_manager - INFO - Baixando chromedriver para linux
+2025-05-17 23:10:42,921 - WDM - INFO - ====== WebDriver manager ======
+2025-05-17 23:10:42,942 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-17 23:10:42,943 - utils.selenium_manager - ERROR - Erro ao configurar o driver: 'NoneType' object has no attribute 'split'
+2025-05-17 23:10:42,943 - core.controller - ERROR - Erro ao executar etapa search com linkedin: 'NoneType' object has no attribute 'split'
+2025-05-17 23:10:42,943 - core.controller - INFO - Executando etapa: search com cnpj
+2025-05-17 23:10:42,943 - modules.scrapers.cnpj_scraper - INFO - Iniciando busca de CNPJ com critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:42,943 - core.controller - INFO - Busca com cnpj encontrou 5 resultados
+2025-05-17 23:10:42,943 - modules.scrapers.cnpj_scraper - INFO - Coletando dados de CNPJ para: TOTVS S.A.
+2025-05-17 23:10:43,208 - modules.scrapers.cnpj_scraper - INFO - Dados coletados com sucesso da ReceitaWS para CNPJ 53113791000122
+2025-05-17 23:10:43,208 - modules.scrapers.cnpj_scraper - INFO - Coletando dados de CNPJ para: LOCAWEB SERVIÇOS DE INTERNET S.A.
+2025-05-17 23:10:43,382 - modules.scrapers.cnpj_scraper - INFO - Dados coletados com sucesso da ReceitaWS para CNPJ 02351877000152
+2025-05-17 23:10:43,383 - modules.scrapers.cnpj_scraper - INFO - Coletando dados de CNPJ para: POSITIVO TECNOLOGIA S.A.
+2025-05-17 23:10:43,494 - modules.scrapers.cnpj_scraper - INFO - Dados coletados com sucesso da ReceitaWS para CNPJ 81243735000148
+2025-05-17 23:10:43,495 - modules.scrapers.cnpj_scraper - INFO - Coletando dados de CNPJ para: LINX S.A.
+2025-05-17 23:10:43,592 - modules.scrapers.cnpj_scraper - WARNING - Erro ao acessar ReceitaWS: 429
+2025-05-17 23:10:43,594 - utils.selenium_manager - INFO - Sistema operacional detectado: linux
+2025-05-17 23:10:43,595 - utils.selenium_manager - INFO - Baixando chromedriver para linux
+2025-05-17 23:10:43,595 - WDM - INFO - ====== WebDriver manager ======
+2025-05-17 23:10:43,615 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-17 23:10:43,616 - utils.selenium_manager - ERROR - Erro ao configurar o driver: 'NoneType' object has no attribute 'split'
+2025-05-17 23:10:43,616 - modules.scrapers.cnpj_scraper - ERROR - Erro ao coletar dados do CNPJ.biz: 'NoneType' object has no attribute 'split'
+2025-05-17 23:10:43,616 - modules.scrapers.cnpj_scraper - INFO - Coletando dados de CNPJ para: CI&T SOFTWARE S.A.
+2025-05-17 23:10:43,732 - modules.scrapers.cnpj_scraper - WARNING - Erro ao acessar ReceitaWS: 429
+2025-05-17 23:10:43,734 - utils.selenium_manager - INFO - Sistema operacional detectado: linux
+2025-05-17 23:10:43,735 - utils.selenium_manager - INFO - Baixando chromedriver para linux
+2025-05-17 23:10:43,735 - WDM - INFO - ====== WebDriver manager ======
+2025-05-17 23:10:43,755 - WDM - INFO - Get LATEST chromedriver version for google-chrome
+2025-05-17 23:10:43,756 - utils.selenium_manager - ERROR - Erro ao configurar o driver: 'NoneType' object has no attribute 'split'
+2025-05-17 23:10:43,756 - modules.scrapers.cnpj_scraper - ERROR - Erro ao coletar dados do CNPJ.biz: 'NoneType' object has no attribute 'split'
+2025-05-17 23:10:43,756 - core.controller - INFO - Executando etapa: search com company_site
+2025-05-17 23:10:43,756 - modules.scrapers.company_site_scraper - INFO - Iniciando busca por sites corporativos com critérios: {'sector': {'main': 'tecnologia', 'sub_sectors': ['software', 'hardware', 'serviços de TI', 'desenvolvimento', 'internet', 'telecomunicações', 'fintech', 'edtech', 'healthtech', 'agtech']}, 'location': {'country': 'Brasil'}, 'output': {'format': 'excel', 'max_results': 500}}
+2025-05-17 23:10:43,756 - modules.scrapers.company_site_scraper - WARNING - Nenhuma lista de empresas fornecida para busca de sites corporativos
+2025-05-17 23:10:43,756 - core.controller - INFO - Busca com company_site encontrou 0 resultados
+2025-05-17 23:10:43,756 - core.controller - INFO - Busca concluída. 5 empresas encontradas
+2025-05-17 23:10:43,756 - modules.processors.data_processor - INFO - Preenchendo dados ausentes para TOTVS S.A.
+2025-05-17 23:10:43,756 - modules.processors.data_processor - INFO - Preenchendo dados ausentes para LWSA S/A
+2025-05-17 23:10:43,757 - modules.processors.data_processor - INFO - Preenchendo dados ausentes para POSITIVO TECNOLOGIA S.A.
+2025-05-17 23:10:43,757 - modules.processors.data_processor - WARNING - Exportando dados parciais para LINX S.A.
+2025-05-17 23:10:43,757 - modules.processors.data_processor - INFO - Preenchendo dados ausentes para LINX S.A.
+2025-05-17 23:10:43,757 - modules.processors.data_processor - WARNING - Exportando dados parciais para CI&T SOFTWARE S.A.
+2025-05-17 23:10:43,757 - modules.processors.data_processor - INFO - Preenchendo dados ausentes para CI&T SOFTWARE S.A.
+2025-05-17 23:10:43,757 - core.quality_checker - INFO - Qualidade dos dados para TOTVS S.A.: 0.94
+2025-05-17 23:10:43,757 - core.quality_checker - INFO - Qualidade dos dados para LWSA S/A: 1.00
+2025-05-17 23:10:43,757 - core.quality_checker - INFO - Qualidade dos dados para POSITIVO TECNOLOGIA S.A.: 0.94
+2025-05-17 23:10:43,757 - core.quality_checker - INFO - Qualidade dos dados para LINX S.A.: 0.94
+2025-05-17 23:10:43,757 - core.quality_checker - INFO - Qualidade dos dados para CI&T SOFTWARE S.A.: 0.94
+2025-05-17 23:10:43,757 - core.controller - INFO - Processamento concluído. 5 empresas válidas
+2025-05-17 23:10:43,906 - modules.exporters.excel_exporter - ERROR - Erro ao exportar dados para Excel com formatação: 'Workbook' object has no attribute 'create_font'
+2025-05-17 23:10:43,917 - modules.exporters.excel_exporter - INFO - Dados exportados sem formatação para /home/ubuntu/crawler-flex/modules/exporters/../../data/output/empresas_20250517_231043.xlsx
+2025-05-17 23:10:43,917 - core.controller - INFO - Resultados exportados para /home/ubuntu/crawler-flex/modules/exporters/../../data/output/empresas_20250517_231043.xlsx
+2025-05-17 23:10:43,917 - root - INFO - Execução concluída em 1.00 segundos
+2025-05-17 23:10:43,918 - root - INFO - Total de empresas encontradas: 5
+2025-05-17 23:10:43,918 - root - INFO - Total de empresas válidas: 5
+2025-05-17 23:10:43,918 - root - INFO - Resultados exportados para: /home/ubuntu/crawler-flex/modules/exporters/../../data/output/empresas_20250517_231043.xlsx

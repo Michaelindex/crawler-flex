@@ -1,0 +1,13 @@
+{
+  "sector": {
+    "main": "tecnologia",
+    "sub_sectors": ["software", "hardware", "serviços de TI", "desenvolvimento", "internet", "telecomunicações", "fintech", "edtech", "healthtech", "agtech"]
+  },
+  "location": {
+    "country": "Brasil"
+  },
+  "output": {
+    "format": "excel",
+    "max_results": 500
+  }
+}

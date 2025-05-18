@@ -22,7 +22,7 @@ def setup_logging():
         level=getattr(logging, settings.LOG_LEVEL),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(log_file),
+            logging.FileHandler(log_file, encoding='utf-8'),  # Forçar UTF-8
             logging.StreamHandler(sys.stdout)
         ]
     )
@@ -153,6 +153,9 @@ def main():
                 print(f"   CNPJ: {company.get('CNPJ', 'N/A')}")
                 print(f"   Localização: {company.get('Location', 'N/A')}")
                 print(f"   Contato: {company.get('E-mail', 'N/A')}")
+        else:
+            print("\nNenhuma empresa válida encontrada que atenda aos critérios.")
+            print("Verifique os logs para mais detalhes sobre os problemas encontrados.")
         
         return 0
     
