@@ -1,4 +1,0 @@
-2025-05-17 23:15:32,405 - root - INFO - Iniciando execução do crawler...
-2025-05-17 23:15:32,405 - core.controller - INFO - Iniciando execução com critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
-2025-05-17 23:15:32,405 - core.criteria_parser - INFO - Processando critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
-2025-05-17 23:15:32,406 - root - ERROR - Erro durante execução: É necessário fornecer critérios de busca ou uma lista de empresas

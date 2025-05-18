@@ -1,0 +1,40 @@
+2025-05-18 00:46:53,592 - root - INFO - Iniciando execução do crawler...
+2025-05-18 00:46:53,592 - core.controller - INFO - Iniciando execução com critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
+2025-05-18 00:46:53,593 - core.criteria_parser - INFO - Processando critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
+2025-05-18 00:46:53,593 - core.controller - INFO - Critérios processados: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
+2025-05-18 00:46:53,593 - core.controller - INFO - Plano de busca criado com 3 etapas
+2025-05-18 00:46:53,593 - core.controller - INFO - Executando etapa: search com linkedin
+2025-05-18 00:46:53,593 - modules.scrapers.linkedin_scraper - INFO - Iniciando busca no LinkedIn com critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
+2025-05-18 00:46:53,593 - modules.scrapers.linkedin_scraper - INFO - Buscando empresa específica no LinkedIn: TOTVS S.A.
+2025-05-18 00:46:53,599 - utils.selenium_manager - INFO - Sistema operacional detectado: windows
+2025-05-18 00:46:53,600 - utils.selenium_manager - INFO - Usando chromedriver.exe local
+2025-05-18 00:46:54,674 - utils.selenium_manager - INFO - Driver Selenium inicializado com sucesso
+2025-05-18 00:46:54,674 - modules.scrapers.linkedin_scraper - INFO - Tentando login no LinkedIn
+2025-05-18 00:47:29,949 - modules.scrapers.linkedin_scraper - INFO - Login no LinkedIn bem-sucedido
+2025-05-18 00:47:29,949 - modules.scrapers.linkedin_scraper - INFO - Navegando para URL de busca: https://www.linkedin.com/search/results/companies/?keywords=TOTVS%20S.A.
+2025-05-18 00:47:31,900 - modules.scrapers.linkedin_scraper - ERROR - Falha ao navegar para https://www.linkedin.com/search/results/companies/?keywords=TOTVS%20S.A.
+2025-05-18 00:47:31,900 - utils.selenium_manager - INFO - Encerrando sessão Selenium
+2025-05-18 00:47:38,105 - modules.scrapers.linkedin_scraper - INFO - Busca no LinkedIn encontrou 0 resultados
+2025-05-18 00:47:38,106 - core.controller - INFO - Busca com linkedin encontrou 0 resultados
+2025-05-18 00:47:38,106 - core.controller - INFO - Executando etapa: search com cnpj
+2025-05-18 00:47:38,106 - modules.scrapers.cnpj_scraper - INFO - Iniciando busca de CNPJ com critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
+2025-05-18 00:47:38,106 - core.controller - INFO - Busca com cnpj encontrou 1 resultados
+2025-05-18 00:47:38,106 - modules.scrapers.cnpj_scraper - INFO - Coletando dados de CNPJ para: TOTVS S.A.
+2025-05-18 00:47:38,738 - modules.scrapers.cnpj_scraper - INFO - Dados coletados com sucesso da ReceitaWS para CNPJ 53113791000122
+2025-05-18 00:47:38,738 - core.controller - INFO - Executando etapa: search com company_site
+2025-05-18 00:47:38,739 - modules.scrapers.company_site_scraper - INFO - Iniciando busca por sites corporativos com critérios: {'companies': [{'name': 'TOTVS S.A.', 'sector': 'tecnologia'}], 'output': {'format': 'excel', 'max_results': 1}}
+2025-05-18 00:47:38,739 - modules.scrapers.company_site_scraper - INFO - Buscando site corporativo para: TOTVS S.A.
+2025-05-18 00:47:38,739 - utils.searx_client - INFO - Realizando busca SearXNG: TOTVS S.A. site oficial
+2025-05-18 00:47:39,619 - modules.scrapers.company_site_scraper - ERROR - Erro ao buscar site corporativo para TOTVS S.A.: 'str' object has no attribute 'get'
+2025-05-18 00:47:39,620 - modules.scrapers.company_site_scraper - INFO - Busca com company_site encontrou 0 resultados
+2025-05-18 00:47:39,620 - core.controller - INFO - Busca com company_site encontrou 0 resultados
+2025-05-18 00:47:39,620 - core.controller - INFO - Busca concluída. 1 empresas encontradas
+2025-05-18 00:47:39,620 - core.quality_checker - INFO - Qualidade dos dados para TOTVS S.A.: 0.62
+2025-05-18 00:47:39,620 - core.controller - INFO - Processamento concluído. 1 empresas válidas
+2025-05-18 00:47:39,784 - modules.exporters.excel_exporter - ERROR - Erro ao exportar dados para Excel com formatação: 'Workbook' object has no attribute 'create_font'
+2025-05-18 00:47:39,792 - modules.exporters.excel_exporter - INFO - Dados exportados sem formatação para C:\Crawler\Empresas\flexible_crawler\modules\exporters\..\..\data\output\empresas_20250518_004739.xlsx
+2025-05-18 00:47:39,792 - core.controller - INFO - Resultados exportados para C:\Crawler\Empresas\flexible_crawler\modules\exporters\..\..\data\output\empresas_20250518_004739.xlsx
+2025-05-18 00:47:39,793 - root - INFO - Execução concluída em 46.20 segundos
+2025-05-18 00:47:39,793 - root - INFO - Total de empresas encontradas: 1
+2025-05-18 00:47:39,793 - root - INFO - Total de empresas válidas: 1
+2025-05-18 00:47:39,793 - root - INFO - Resultados exportados para: C:\Crawler\Empresas\flexible_crawler\modules\exporters\..\..\data\output\empresas_20250518_004739.xlsx

@@ -59,6 +59,9 @@ WHITELIST_SITES = [
 ]
 
 # Configurações de navegação
-NAVIGATION_DELAY = 2  # Segundos entre ações de navegação
-SCROLL_PAUSE_TIME = 1  # Segundos entre rolagens
-MAX_SCROLL_ATTEMPTS = 5  # Número máximo de rolagens por página
+NAVIGATION_DELAY = 10  # Segundos entre ações de navegação
+SCROLL_PAUSE_TIME = 3  # Segundos entre rolagens
+MAX_SCROLL_ATTEMPTS = 15  # Número máximo de rolagens por página
+
+LINKEDIN_USERNAME = "mcialbr123@gmail.com"
+LINKEDIN_PASSWORD = "Narutopika1!"
